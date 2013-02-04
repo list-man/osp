@@ -1,0 +1,31 @@
+import "oaidl.idl";
+import "ocidl.idl";
+
+[
+	object,
+	uuid(F18EEA95-A736-4aad-B8EB-25472C28036C)
+]
+interface IOSPGraph : IUnknown
+{
+	HRESULT Init();
+	HRESULT Render(BSTR aUrl);
+	HRESULT get_Url(BSTR* ppUrl);
+	HRESULT Play();
+	HRESULT Pause();
+	HRESULT Stop();
+	HRESULT GetCurrentPos(long* aPos);
+	HRESULT GetDuration(long* aPos);
+}
+
+[
+	object,
+	uuid(DB5AAF0B-9810-47a0-A16C-BA60C5D6CD54)
+]
+interface IOSPGraphEventHandler : IDispatch
+{
+	HRESULT NotifyEvent([in]ULONG_PTR punkGraph, [in]long aEventCode, [in]LONG_PTR wEventParam, [in]LONG_PTR lEventParam);
+	HRESULT NotifyError([in]ULONG_PTR punkGraph, [in]long aErrCode, [in]long param);
+	HRESULT NotifyGraphStateChange([in]ULONG_PTR punkGraph, [in]long aState);
+	HRESULT NotifyStreamEnd([in]LONG_PTR punkGraph);
+	HRESULT NotifyVolumnChange([in]LONG_PTR punkGraph, [in]long aVolumn, [in]BOOL aMute);
+}

@@ -1,0 +1,16 @@
+import "oaidl.idl";
+import "ocidl.idl";
+
+[
+	object,
+	uuid(F044B55D-CF6D-4c06-AF2D-0795293EB0D9)
+]
+interface IWidget : IUnknown
+{
+	[local]
+	HWND Create(HWND hParent, UINT nId);
+	[local]
+	BOOL Destroy();
+	[local]
+	HWND GetHWnd();
+}

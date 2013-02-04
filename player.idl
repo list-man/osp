@@ -1,0 +1,53 @@
+import "oaidl.idl";
+import "ocidl.idl";
+
+typedef enum
+{
+	sgsUndefined = 0,
+	sgsInitialization = 1,
+	sgsClosing = 2,
+	sgsClose = 3,
+	sgsOpening = 4,
+	sgsOpen = 5,
+	sgsRunning = 6,
+	sgsRun = 7,
+	sgsPausing = 8,
+	sgsPause = 9,
+	sgsStopping = 10,
+	sgsStop = 11,
+	sgsBuffering = 12,
+	sgsError = 13,
+	sgsStreamEnd = 14,
+	sgsBeforeRun = 15
+}OSPGraphState;
+
+[
+	object,
+	uuid(6A0DC797-9093-46a9-B70C-B1186013EDC4)
+]
+interface IPlayer : IDispatch
+{
+	[id(1), helpstring("play")] HRESULT play([in]BSTR aUrl);
+	[id(2), helpstring("pause")] HRESULT pause();
+	[id(3), helpstring("resume")] HRESULT resume();
+	[id(4), helpstring("stop")] HRESULT stop();
+}
+
+[
+	uuid(16860155-D0B2-4e1e-9EB1-F3310CE0FBE2),
+	version(1.0),
+	helpstring("DirectShow Example 1.0 Library")
+]
+library DirectShowExampleLib
+{
+	importlib("stdole2.tlb");
+
+	[
+		uuid(86295120-BB72-4a09-A3E8-728C65453CF1)
+	]
+	coclass Player
+	{
+		[default]interface IPlayer;
+	}
+}
+

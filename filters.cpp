@@ -116,5 +116,7 @@ Filter*	g_filters[] = {
 	&gf_defaultAudioRenderer, &gf_defaultDirectSound, &gf_defaultWaveOut,
 	//Video Renderer
 	&gf_defaultVideoRenderer, &gf_VMR9Windowless, &gf_VMR7Windowless, &gf_EnhancedVideoRenderer,
-	&gf_VideoRender, &gf_VideoRendererDefault
+	&gf_VideoRender, &gf_VideoRendererDefault,
+	//End
+	NULL
 };

@@ -1,5 +1,9 @@
 import "oaidl.idl";
 import "ocidl.idl";
+import "strmif.idl";
+
+interface IOSPGraphEventHandler;
+interface IOSPServiceMgr;
 
 [
 	object,
@@ -7,7 +11,7 @@ import "ocidl.idl";
 ]
 interface IOSPGraph : IUnknown
 {
-	HRESULT Init();
+	HRESULT Init(IOSPGraphEventHandler* aEventHandler, IOSPServiceMgr* aServiceMre);
 	HRESULT Render(BSTR aUrl);
 	HRESULT get_Url(BSTR* ppUrl);
 	HRESULT Play();
@@ -28,4 +32,33 @@ interface IOSPGraphEventHandler : IDispatch
 	HRESULT NotifyGraphStateChange([in]ULONG_PTR punkGraph, [in]long aState);
 	HRESULT NotifyStreamEnd([in]LONG_PTR punkGraph);
 	HRESULT NotifyVolumnChange([in]LONG_PTR punkGraph, [in]long aVolumn, [in]BOOL aMute);
+}
+
+[
+	object,
+	uuid(20F3BC30-AD68-41ce-A173-B3420CE3DFCC)
+]
+interface IOSPGraphBuilderCallback : IUnknown
+{
+
+}
+
+[
+	object,
+	uuid(E15D0A7D-0E6F-4ce8-9245-512F6A0FBDF4)
+]
+interface IOSPGraphBuilder : IUnknown
+{
+	HRESULT RenderFile(IGraphBuilder* pGb, LPCWSTR aFile, IOSPGraphBuilderCallback* aCalback);
+}
+
+[
+	object,
+	uuid(C8AC3067-97D2-4654-B61F-9B88B075B509)
+]
+interface IOSPServiceMgr : IUnknown
+{
+	HRESULT RenderUrl(IGraphBuilder* pGb, LPCWSTR aFile, IOSPGraphBuilderCallback* aCallback);
+	HRESULT RenderFilter(IGraphBuilder* pGb, IBaseFilter* aFilter, IOSPGraphBuilderCallback* aCallback);
+	HRESULT RenderPin(IGraphBuilder* pGb, IPin* aPintout, IOSPGraphBuilderCallback* aCallback);
 }

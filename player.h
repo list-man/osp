@@ -3,6 +3,40 @@
 #include "player_h.h"
 #include "common_h.h"
 #include "OSPGraphManager.h"
+#include "filters.h"
+#include "inner_h.h"
+
+class ATL_NO_VTABLE COSPServiceMgr :
+			public CComObjectRootEx<CComMultiThreadModel>,
+			public CComCoClass<COSPServiceMgr>,
+			public IOSPServiceMgr
+{
+public:
+	COSPServiceMgr();
+	~COSPServiceMgr();
+
+	BEGIN_COM_MAP(COSPServiceMgr)
+		COM_INTERFACE_ENTRY(IOSPServiceMgr)
+	END_COM_MAP()
+
+//IOSPServiceMgr
+public:
+	STDMETHOD(RenderUrl)(IGraphBuilder *pGb, LPCWSTR aFile, IOSPGraphBuilderCallback *aCallback);
+	STDMETHOD(RenderFilter)(IGraphBuilder *pGb, IBaseFilter *aFilter, IOSPGraphBuilderCallback *aCallback);
+	STDMETHOD(RenderPin)(IGraphBuilder *pGb, IPin *aPintout, IOSPGraphBuilderCallback *aCallback);
+public:
+	void InitFilters();
+protected:
+	vector<SourceFilter*>	m_sourceFilters;
+	vector<Filter*>			m_allFilters;
+
+	std::map<wstring, std::map<wstring, long> >	m_protocalSource;
+	std::map<wstring, std::multimap<long, long, std::greater<long> > >	m_extensionSource;
+
+	std::multimap<long, long, std::greater<long> >	m_videoTransform;
+	std::multimap<long, long, std::greater<long> >	m_audioTransform;
+	std::multimap<long, long, std::greater<long> >	m_otherTransform;
+};
 
 class CPlayer :
 			public CComObjectRootEx<CComMultiThreadModel>,
@@ -14,11 +48,7 @@ class CPlayer :
 public:
 	CPlayer();
 	~CPlayer();
-
-	HRESULT FinalConstruct()
-	{
-		return S_OK;
-	}
+	HRESULT FinalConstruct();
 
 	DECLARE_PROTECT_FINAL_CONSTRUCT()
 	DECLARE_NO_REGISTRY()
@@ -61,7 +91,9 @@ public:
 
 protected:
 	HRESULT CreateGraphManager();
+	HRESULT CreateGraphService();
 	HRESULT InitGraphManager();
 protected:
 	COSPGraphManager*	m_graphManager;
+	CComPtr<IOSPServiceMgr>	m_spServiceMgr;
 };

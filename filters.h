@@ -1,5 +1,27 @@
 #pragma once
 
+template<class T, typename ESP>
+T Explode(T str, CAtlList<T>& lst, ESP sep, UINT ltd = 0)
+{
+	lst.RemoveAll();
+
+	for (int i = 0, j = 0; ; i = j + 1)
+	{
+		j = str.Find(sep, i);
+		if (j < 0 || lst.GetCount() == ltd - 1)
+		{
+			lst.AddTail(str.Mid(i).Trim());
+			break;
+		}
+		else
+		{
+			lst.AddTail(str.Mid(i, j-1).Trim());
+		}
+	}
+
+	return lst.GetHead();
+}
+
 enum FilterLoadType
 {
 	FLT_FILE = 0x01,
@@ -28,8 +50,8 @@ typedef struct tagFilter
 	const CLSID*	rclsid;
 	LPCWSTR	pszName;
 	DWORD	dwMerit;
-	long	loadType;
-	long	filterType;
+	FilterLoadType loadType;
+	FilterType	filterType;
 	UINT	nMediaTypes;
 	const REGPINTYPES *lpMediaType;
 	LPCWSTR	pszFilePath;

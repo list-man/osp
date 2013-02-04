@@ -47,6 +47,8 @@ using namespace ATL;
 #include <Uxtheme.h>
 
 #include <vector>
+#include <list>
+#include <map>
 #include <string>
 #include <xstring>
 #include <GdiPlus.h>

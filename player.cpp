@@ -1,15 +1,112 @@
 #include "stdafx.h"
 #include "player.h"
 
+extern Filter* g_filters[];
+
+//////////////////////////////////////////////////////////////////////////
+//COSPServiceMgr
+COSPServiceMgr::COSPServiceMgr()
+{
+	InitFilters();
+}
+
+COSPServiceMgr::~COSPServiceMgr()
+{
+
+}
+
+//////////////////////////////////////////////////////////////////////////
+// IOSPServiceMgr
+STDMETHODIMP COSPServiceMgr::RenderUrl(IGraphBuilder *pGb, LPCWSTR aFile, IOSPGraphBuilderCallback *aCallback)
+{
+	return E_NOTIMPL;
+}
+
+STDMETHODIMP COSPServiceMgr::RenderFilter(IGraphBuilder *pGb, IBaseFilter *aFilter, IOSPGraphBuilderCallback *aCallback)
+{
+	return E_NOTIMPL;
+}
+
+STDMETHODIMP COSPServiceMgr::RenderPin(IGraphBuilder *pGb, IPin *aPintout, IOSPGraphBuilderCallback *aCallback)
+{
+	return E_NOTIMPL;
+}
+
+void COSPServiceMgr::InitFilters()
+{
+	Filter** filters = g_filters;
+
+	while (*filters)
+	{
+		Filter* flt = *filters;
+		m_allFilters.push_back(flt);
+
+		int index = m_allFilters.size();
+
+		if (FT_SRC == flt->filterType)
+		{
+			SourceFilter* srcFilter = (SourceFilter*)flt;
+			m_sourceFilters.push_back(srcFilter);
+			
+			if (srcFilter->pszProtocol)
+			{
+				CAtlList<CString> ls;
+				Explode(CString(srcFilter->pszProtocol), ls, L',');
+				while (ls.GetCount() >= 2)
+				{
+					CString protocal = ls.RemoveHead();
+					CString extension = ls.RemoveHead();
+
+					std::map<wstring, long>& extSource = m_protocalSource[(LPCTSTR)protocal];
+					extSource[(LPCTSTR)extension] = index;
+				}
+			}
+			else if (srcFilter->pszExtension)
+			{
+				CAtlList<CString> ls;
+				Explode(CString(srcFilter->pszExtension), ls, L',');
+				while (ls.GetCount() >= 2)
+				{
+					CString extension = ls.RemoveHead();
+
+					std::multimap<long, long, std::greater<long> >& source = m_extensionSource[(LPCTSTR)extension];
+					source.insert(std::make_pair(srcFilter->filterBase.dwMerit, index));
+				}
+			}
+		}
+		else if (FT_ADEC == flt->filterType)
+		{
+			m_audioTransform.insert(std::make_pair(flt->dwMerit, index));
+		}
+		else if (FT_VDEC == flt->filterType)
+		{
+			m_videoTransform.insert(std::make_pair(flt->dwMerit, index));
+		}
+		else if (FT_OTHER == flt->filterType || FT_SPLT == flt->filterType)
+		{
+			m_otherTransform.insert(std::make_pair(flt->dwMerit, index));
+		}
+
+		filters++;
+	}
+}
+
 //////////////////////////////////////////////////////////////////////////
 //public member functions.
 CPlayer::CPlayer() : m_graphManager(NULL)
 {
+	CreateGraphService();
 }
 
 CPlayer::~CPlayer()
 {
 
+}
+
+HRESULT CPlayer::FinalConstruct()
+{
+	CreateGraphService();
+	return S_OK;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -127,6 +224,15 @@ HRESULT CPlayer::CreateGraphManager()
 	}
 
 	return hRes;
+}
+
+HRESULT CPlayer::CreateGraphService()
+{
+	if (!m_spServiceMgr) {
+		return COSPServiceMgr::CreateInstance(&m_spServiceMgr);
+	}
+
+	return S_OK;
 }
 
 HRESULT CPlayer::InitGraphManager()

@@ -160,7 +160,7 @@ void COSPGraph::DoNotifyGraphStateChange(OSPGraphState gs, BOOL bNotify/*=TRUE*/
 
 }
 
-HRESULT COSPGraph::DoRender(IFilterGraph* pGb, LPCWSTR aUrl)
+HRESULT COSPGraph::DoRender(IGraphBuilder* pGb, LPCWSTR aUrl)
 {
 	CheckPointer(aUrl, E_UNEXPECTED);
 
@@ -171,32 +171,12 @@ HRESULT COSPGraph::DoRender(IFilterGraph* pGb, LPCWSTR aUrl)
 		m_url = aUrl;
 	}
 
-	CString strUrl = aUrl;
-	int idx = strUrl.Find(L":\\");
-	if (-1 != idx)
-		idx = strUrl.Find(L":/");
-
-	if (-1 != idx)
+	if (m_spServiceMgr)
 	{
-		CString strPrefix = strUrl.Left(idx);
-		if (strPrefix.GetLength()==1 && strPrefix.GetAt(0)>=L'A' && strPrefix.GetAt(0)<=L'z')
-		{
-			return DoRenderLocal(pGb, aUrl);
-		}
+		return m_spServiceMgr->RenderUrl(pGb, aUrl, static_cast<IOSPGraphBuilderCallback*>(this));
 	}
-	
-	return DoRenderRemote(pGb, aUrl);
-}
 
-HRESULT COSPGraph::DoRenderLocal(IFilterGraph* pGb, LPCWSTR aUrl)
-{
-
-	return S_OK;
-}
-
-HRESULT COSPGraph::DoRenderRemote(IFilterGraph* pGb, LPCWSTR aUrl)
-{
-	return E_NOTIMPL;
+	return E_UNEXPECTED;
 }
 
 HRESULT COSPGraph::InternelPlay()
@@ -259,8 +239,13 @@ unsigned int WINAPI COSPGraph::BackgroundHelper(LPVOID aParam)
 	return 0;
 }
 
-STDMETHODIMP COSPGraph::Init(void)
+STDMETHODIMP COSPGraph::Init(IOSPGraphEventHandler* aEventHandler, IOSPServiceMgr* aServiceMre)
 {
+	CheckPointer(aEventHandler, E_INVALIDARG);
+
+	m_spGraphEventHander = aEventHandler;
+	m_spServiceMgr = aServiceMre;
+
 	HANDLE hThread = (HANDLE)_beginthreadex(NULL, 0, BackgroundHelper, (LPVOID)this, 0, NULL);
 	CloseHandle(hThread);
 

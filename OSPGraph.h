@@ -33,7 +33,8 @@ protected:
 class ATL_NO_VTABLE COSPGraph : 
 				public CComObjectRootEx<CComMultiThreadModel>,
 				public CComCoClass<COSPGraph>,
-				public IOSPGraph
+				public IOSPGraph,
+				public IOSPGraphBuilderCallback
 {
 public:
 	COSPGraph();
@@ -47,6 +48,7 @@ public:
 
 	BEGIN_COM_MAP(COSPGraph)
 		COM_INTERFACE_ENTRY(IOSPGraph)
+		COM_INTERFACE_ENTRY(IOSPGraphBuilderCallback)
 	END_COM_MAP()
 
 public:
@@ -54,9 +56,7 @@ public:
 	HRESULT CloseFilterGraph();
 protected:
 	void DoNotifyGraphStateChange(OSPGraphState gs, BOOL bNotify=TRUE);
-	HRESULT DoRender(IFilterGraph* pGb, LPCWSTR aUrl);
-	HRESULT DoRenderLocal(IFilterGraph* pGb, LPCWSTR aUrl);
-	HRESULT DoRenderRemote(IFilterGraph* pGb, LPCWSTR aUrl);
+	HRESULT DoRender(IGraphBuilder* pGb, LPCWSTR aUrl);
 	HRESULT InternelPlay();
 	HRESULT InternelPause();
 	HRESULT InternelStop();
@@ -64,7 +64,7 @@ protected:
 
 //IOSPGraph.
 public:
-	STDMETHOD(Init)(void);
+	STDMETHOD(Init)(IOSPGraphEventHandler* aEventHandler, IOSPServiceMgr* aServiceMre);
 	STDMETHOD(Render)(BSTR aUrl);
 	STDMETHOD(get_Url)(BSTR *ppUrl);
 	STDMETHOD(Play)(void);
@@ -80,4 +80,6 @@ protected:
 	CCritSec	m_cs;
 
 	CComPtr<IFileSourceFilter>	m_sourceFilter;
+	CComPtr<IOSPServiceMgr>	m_spServiceMgr;
+	CComPtr<IOSPGraphEventHandler>	m_spGraphEventHander;
 };

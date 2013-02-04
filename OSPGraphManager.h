@@ -28,6 +28,7 @@ public:
 
 public:
 	void SetVideoWindow(HWND hWnd);
+	void SetOSPServiceMgr(IOSPServiceMgr* aServiceMgr);
 	HRESULT RenderGraph(LPCWSTR aUrl);
 	HRESULT PlayGraph();
 	HRESULT PauseGraph();
@@ -38,4 +39,5 @@ protected:
 protected:
 	HWND		m_hVRWnd;
 	CComPtr<IOSPGraph>	m_ospGraph;
+	CComPtr<IOSPServiceMgr>	m_spServiceMgr;
 };

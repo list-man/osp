@@ -53,12 +53,23 @@ void COSPGraphManager::SetVideoWindow(HWND hWnd)
 	m_hVRWnd = hWnd;
 }
 
+void COSPGraphManager::SetOSPServiceMgr(IOSPServiceMgr* aServiceMgr)
+{
+	if (m_spServiceMgr) {
+		m_spServiceMgr.Release();
+	}
+
+	if (aServiceMgr) {
+		aServiceMgr->QueryInterface(__uuidof(IOSPServiceMgr), (void**)&m_spServiceMgr);
+	}
+}
+
 HRESULT COSPGraphManager::RenderGraph(LPCWSTR aUrl)
 {
 	if (!m_ospGraph)
 	{
 		COSPGraph::CreateInstance(&m_ospGraph);
-		m_ospGraph->Init();
+		m_ospGraph->Init(static_cast<IOSPGraphEventHandler*>(this), m_spServiceMgr);
 	}
 
 	if (m_ospGraph)

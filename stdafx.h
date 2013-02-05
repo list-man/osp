@@ -33,6 +33,7 @@ using namespace ATL;
 #include <atlgdi.h>
 #include <atlctrlx.h>
 #include <atlframe.h>
+#include <atlpath.h>
 
 //DirectShow headers.
 #include <DShow.h>

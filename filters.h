@@ -75,3 +75,6 @@ typedef struct tagSourceFilter
 
 Filter*	g_filters[];
 
+static void CStringToBin(CString str, CAtlArray<BYTE>& data);
+BOOL CheckBytes(SourceFilter* aFilterData, HANDLE hFile);
+

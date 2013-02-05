@@ -122,7 +122,7 @@ HRESULT COSPBackgroundRequest::ProcessRequest(COSPGraph* pGraph)
 //Class COSPGraph.
 COSPGraph::COSPGraph()
 {
-
+	m_bAborted = FALSE;
 }
 
 COSPGraph::~COSPGraph()
@@ -304,4 +304,15 @@ STDMETHODIMP COSPGraph::GetCurrentPos(long *aPos)
 STDMETHODIMP COSPGraph::GetDuration(long *aPos)
 {
 	return E_NOTIMPL;
+}
+
+//IOSPGraphBuilderCallback
+STDMETHODIMP COSPGraph::ShouldOperationContinue(void)
+{
+	HRESULT hRes = E_FAIL;
+	m_csAddFilter.Lock();
+	hRes = m_bAborted ? S_OK:E_FAIL;
+	m_csAddFilter.Unlock();
+
+	return hRes;
 }

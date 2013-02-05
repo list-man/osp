@@ -72,12 +72,16 @@ public:
 	STDMETHOD(Stop)(void);
 	STDMETHOD(GetCurrentPos)(long *aPos);
 	STDMETHOD(GetDuration)(long *aPos);
-
+//IOSPGraphBuilderCallback.
+public:
+	STDMETHOD(ShouldOperationContinue)(void);
 public:
 	COSPBackgroundRequest	m_request;
 protected:
 	wstring		m_url;
 	CCritSec	m_cs;
+	BOOL		m_bAborted;
+	CComAutoCriticalSection	m_csAddFilter;
 
 	CComPtr<IFileSourceFilter>	m_sourceFilter;
 	CComPtr<IOSPServiceMgr>	m_spServiceMgr;

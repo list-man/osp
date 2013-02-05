@@ -6,6 +6,16 @@
 #include "filters.h"
 #include "inner_h.h"
 
+class COSPGraphBuilderPriavte
+{
+public:
+	COSPGraphBuilderPriavte();
+	~COSPGraphBuilderPriavte();
+public:
+	CComPtr<IBaseFilter>	m_sourceFilter;
+	BOOL	m_bIsVistaOrLater;
+};
+
 class ATL_NO_VTABLE COSPServiceMgr :
 			public CComObjectRootEx<CComMultiThreadModel>,
 			public CComCoClass<COSPServiceMgr>,
@@ -24,8 +34,14 @@ public:
 	STDMETHOD(RenderUrl)(IGraphBuilder *pGb, LPCWSTR aFile, IOSPGraphBuilderCallback *aCallback);
 	STDMETHOD(RenderFilter)(IGraphBuilder *pGb, IBaseFilter *aFilter, IOSPGraphBuilderCallback *aCallback);
 	STDMETHOD(RenderPin)(IGraphBuilder *pGb, IPin *aPintout, IOSPGraphBuilderCallback *aCallback);
-public:
+protected:
 	void InitFilters();
+	HRESULT DoAddSourceFilter(IGraphBuilder* pGb, LPCWSTR aFile, IOSPGraphBuilderCallback* aCallback, LPVOID aPrivate);
+	HRESULT DoRenderFile(IGraphBuilder* pGb, LPCWSTR aFile, IOSPGraphBuilderCallback* aCallback, LPVOID aPrivate);
+	HRESULT DoRender(IGraphBuilder* pGb, IPin* aPinout, IOSPGraphBuilderCallback* aCallback, LPVOID aPrivate);
+
+	HRESULT DoAddSourceFilter(IGraphBuilder* pGb, LPCWSTR aFile, Filter* aFilterData, IOSPGraphBuilderCallback* aCallback, LPVOID aPrivate);
+	HRESULT DoConnectFilter(IGraphBuilder* pGb, IBaseFilter* aFilter, IPin* aPinin, IOSPGraphBuilderCallback* aCallback, LPVOID aPrivate);
 protected:
 	vector<SourceFilter*>	m_sourceFilters;
 	vector<Filter*>			m_allFilters;

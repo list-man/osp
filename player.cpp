@@ -4,6 +4,23 @@
 extern Filter* g_filters[];
 
 //////////////////////////////////////////////////////////////////////////
+//COSPGraphBuilderPrivate.
+COSPGraphBuilderPriavte::COSPGraphBuilderPriavte()
+{
+	OSVERSIONINFOEX os;
+	memset(&os, 0, sizeof(OSVERSIONINFOEX));
+	os.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
+	::GetVersionEx(&os);
+
+	m_bIsVistaOrLater = os.dwMajorVersion>=6 ?  TRUE:FALSE;
+}
+
+COSPGraphBuilderPriavte::~COSPGraphBuilderPriavte()
+{
+
+}
+
+//////////////////////////////////////////////////////////////////////////
 //COSPServiceMgr
 COSPServiceMgr::COSPServiceMgr()
 {
@@ -19,7 +36,8 @@ COSPServiceMgr::~COSPServiceMgr()
 // IOSPServiceMgr
 STDMETHODIMP COSPServiceMgr::RenderUrl(IGraphBuilder *pGb, LPCWSTR aFile, IOSPGraphBuilderCallback *aCallback)
 {
-	return E_NOTIMPL;
+	COSPGraphBuilderPriavte data;
+	return DoRenderFile(pGb, aFile, aCallback, (void*)&data);
 }
 
 STDMETHODIMP COSPServiceMgr::RenderFilter(IGraphBuilder *pGb, IBaseFilter *aFilter, IOSPGraphBuilderCallback *aCallback)
@@ -89,6 +107,110 @@ void COSPServiceMgr::InitFilters()
 
 		filters++;
 	}
+}
+
+HRESULT COSPServiceMgr::DoAddSourceFilter(IGraphBuilder* pGb, LPCWSTR aFile, IOSPGraphBuilderCallback* aCallback, LPVOID aPrivate)
+{
+	if (!aFile) return E_INVALIDARG;
+
+	URL_COMPONENTS url;
+	memset(&url, 0, sizeof(URL_COMPONENTS));
+	url.dwStructSize = sizeof(URL_COMPONENTS);
+	url.dwSchemeLength = 1;
+	url.dwUrlPathLength = 1;
+	url.dwExtraInfoLength = 1;
+	if (!InternetCrackUrl(aFile, 0, 0, &url))
+	{
+		memset(&url, 0, sizeof(URL_COMPONENTS));
+		url.dwStructSize = sizeof(URL_COMPONENTS);
+		url.nScheme = INTERNET_SCHEME_FILE;
+
+		url.lpszUrlPath = (LPWSTR)aFile;
+		url.dwUrlPathLength = wcslen(aFile);
+	}
+
+	HRESULT hRes = VFW_E_UNSUPPORTED_STREAM;
+	CString strScheme(url.lpszScheme, url.dwSchemeLength);
+	CString strExtension = CPathW(CString(url.lpszUrlPath, url.dwUrlPathLength)).GetExtension();
+	strExtension.Trim(L'.');
+
+	if (strScheme.GetLength() > 1 && strScheme.CompareNoCase(L"file") != 0)
+	{
+
+	}
+	else	//local file.
+	{
+		std::map<wstring, std::multimap<long, long, std::greater<long> > >::iterator itr = m_extensionSource.find((LPCTSTR)strExtension);
+		if (itr != m_extensionSource.end())
+		{
+			std::multimap<long, long, std::greater<long> >::iterator itr2 = itr->second.begin();
+			for (; itr2 != itr->second.end(); itr2++)
+			{
+				if (SUCCEEDED(hRes = DoAddSourceFilter(pGb, aFile, m_allFilters[itr2->second], aCallback, aPrivate)))
+				{
+					return hRes;
+				}
+			}
+		}
+
+		HANDLE hFile = ::CreateFile(aFile, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+		if (INVALID_HANDLE_VALUE == hFile)
+		{
+			return VFW_E_NOT_FOUND;
+		}
+
+		{
+			vector<SourceFilter*>::iterator itr = m_sourceFilters.begin();
+			for (; itr != m_sourceFilters.end(); itr++)
+			{
+				if (CheckBytes(*itr, hFile))
+				{
+					if (SUCCEEDED(hRes = DoAddSourceFilter(pGb, aFile, &(*itr)->filterBase, aCallback, aPrivate)))
+					{
+						CloseHandle(hFile);
+						return hRes;
+					}
+				}
+			}
+
+			CloseHandle(hFile);
+		}
+	}
+
+	return hRes;
+}
+
+HRESULT COSPServiceMgr::DoRenderFile(IGraphBuilder* pGb, LPCWSTR aFile, IOSPGraphBuilderCallback* aCallback, LPVOID aPrivate)
+{
+	COSPGraphBuilderPriavte* data = static_cast<COSPGraphBuilderPriavte*>(aPrivate);
+
+	HRESULT hRes = DoAddSourceFilter(pGb, aFile, aCallback, aPrivate);
+	if (SUCCEEDED(hRes))
+	{
+		if (SUCCEEDED(DoConnectFilter(pGb, data->m_sourceFilter, NULL, aCallback, aPrivate)))
+		{
+
+		}
+	}
+	
+	return S_OK;
+}
+
+HRESULT COSPServiceMgr::DoRender(IGraphBuilder* pGb, IPin* aPinout, IOSPGraphBuilderCallback* aCallback, LPVOID aPrivate)
+{
+	return E_NOTIMPL;
+}
+
+HRESULT COSPServiceMgr::DoAddSourceFilter(IGraphBuilder* pGb, LPCWSTR aFile, Filter* aFilterData, IOSPGraphBuilderCallback* aCallback, LPVOID aPrivate)
+{
+	
+	return E_NOTIMPL;
+}
+
+HRESULT COSPServiceMgr::DoConnectFilter(IGraphBuilder* pGb, IBaseFilter* aFilter, IPin* aPinin, IOSPGraphBuilderCallback* aCallback, LPVOID aPrivate)
+{
+
+	return E_NOTIMPL;
 }
 
 //////////////////////////////////////////////////////////////////////////

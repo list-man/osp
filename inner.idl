@@ -40,7 +40,7 @@ interface IOSPGraphEventHandler : IDispatch
 ]
 interface IOSPGraphBuilderCallback : IUnknown
 {
-
+	HRESULT ShouldOperationContinue();
 }
 
 [

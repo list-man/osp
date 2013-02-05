@@ -120,3 +120,93 @@ Filter*	g_filters[] = {
 	//End
 	NULL
 };
+
+static void CStringToBin(CString str, CAtlArray<BYTE>& data)
+{
+	str.Trim();
+	ASSERT((str.GetLength()&1) == 0);
+	data.SetCount(str.GetLength()/2);
+
+	BYTE b = 0;
+
+	str.MakeUpper();
+	for(int i = 0, j = str.GetLength(); i < j; i++)
+	{
+		TCHAR c = str[i];
+		if(c >= '0' && c <= '9') 
+		{
+			if(!(i&1)) b = ((char(c-'0')<<4)&0xf0)|(b&0x0f);
+			else b = (char(c-'0')&0x0f)|(b&0xf0);
+		}
+		else if(c >= 'A' && c <= 'F')
+		{
+			if(!(i&1)) b = ((char(c-'A'+10)<<4)&0xf0)|(b&0x0f);
+			else b = (char(c-'A'+10)&0x0f)|(b&0xf0);
+		}
+		else break;
+
+		if(i&1)
+		{
+			data[i>>1] = b;
+			b = 0;
+		}
+	}
+}
+
+BOOL CheckBytes(SourceFilter* aFilterData, HANDLE hFile)
+{
+	BOOL bMatched = TRUE;
+
+	if (aFilterData->pszCheckByte)
+	{
+		LARGE_INTEGER size = {0, 0};
+		size.LowPart = GetFileSize(hFile, (DWORD*)&size.HighPart);
+		if (size.LowPart != INVALID_FILE_SIZE)
+		{
+			CAtlList<CString>	ls;
+			Explode(CString(aFilterData->pszCheckByte), ls, L',');
+
+			if (ls.GetCount() < 4)
+				return FALSE;
+
+			while (ls.GetCount() >= 4 && bMatched)
+			{
+				CString strOffset = ls.RemoveHead();
+				CString strCb = ls.RemoveHead();
+				CString strMask = ls.RemoveHead();
+				CString strVal = ls.RemoveHead();
+
+				LARGE_INTEGER offset;
+				offset.QuadPart = _ttoi64(strOffset);
+				if (offset.QuadPart < 0)
+				{
+					offset.QuadPart = size.QuadPart + offset.QuadPart;
+				}
+
+				SetFilePointer(hFile, offset.LowPart, &offset.HighPart, FILE_BEGIN);
+
+				while (strMask.GetLength() < strVal.GetLength())
+				{
+					strMask += L"F";
+				}
+
+				CAtlArray<BYTE> maskByte, valByte;
+				CStringToBin(strMask, maskByte);
+				CStringToBin(strVal, valByte);
+
+				for (size_t i = 0; i < valByte.GetCount(); i++)
+				{
+					BYTE b;
+					DWORD r;
+					if (!ReadFile(hFile, &b, 1, &r, NULL) || (b & maskByte[i]) != valByte[i])
+					{
+						bMatched = TRUE;
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	return bMatched;
+}
